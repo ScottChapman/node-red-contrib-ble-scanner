@@ -20,6 +20,63 @@
  * @author <a href="mailto:carlos.pedrinaci@open.ac.uk">Carlos Pedrinaci</a> (KMi - The Open University)
  * based on the initial node by Charalampos Doukas http://blog.buildinginternetofthings.com/2013/10/12/using-node-red-to-scan-for-ble-devices/
  */
+const util = require('util');
+const setTimeoutPromise = util.promisify(setTimeout);
+const setImmediatePromise = util.promisify(setImmediate);
+const startDelay = 15;
+const stopDelay = 10;
+
+// Take care of starting the scan and sending the status message
+function startScan(node,noble) {
+    console.log("Inside startScan")
+    if (!node.scanning) {
+        // start the scan
+        noble.startScanning([], false, function() {
+            node.log("Scanning for BLEs started. UUIDs: " + node.uuids + " - Duplicates allowed: " + node.duplicates);
+            node.status({fill:"green",shape:"dot",text:"started"});
+            node.scanning = true;
+        });
+    }
+}
+
+// Take care of stopping the scan and sending the status message
+function stopScan(node,noble, error) {
+    console.log("Inside stopScan")
+    if (node.scanning) {
+        // stop the scan
+        noble.stopScanning(function() {
+            node.log('BLE scanning stopped.');
+            node.status({fill:"red",shape:"ring",text:"stopped"});
+            node.scanning = false;
+        });
+        if (error) {
+            node.warn('BLE scanning stopped due to change in adapter state.');
+        }
+    }
+}
+
+
+function startScanning(node,noble) {
+    console.log("first")
+    scanIteration(node,noble)
+    setInterval(() => {
+        console.log("interval")
+        scanIteration(node,noble);
+    },startDelay * 1000)
+}
+
+function scanIteration(node,noble) {
+    return new Promise((resolve,reject) => {
+        console.log("Scan iteration start")
+        startScan(node,noble);
+        setTimeoutPromise(stopDelay*1000).then(() => {
+            console.log("Scan iteration stop")
+            stopScan(node,noble)
+        })
+
+    })
+}
+
 module.exports = function(RED) {
     "use strict";
 
@@ -32,13 +89,16 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,n);
 
         // Store local copies of the node configuration (as defined in the .html)
+        /*
         this.duplicates = n.duplicates;
         this.uuids = [];
         if (n.uuids != undefined && n.uuids !== "") {
             this.uuids = n.uuids.split(',');    //obtain array of uuids
         }
+        */
 
-        var node = this;
+        // var node = this;
+        var node = RED;
         var machineId = os.hostname();
         var scanning = false;
 
@@ -86,100 +146,23 @@ module.exports = function(RED) {
             node.send(msg);
         });
 
-        // Take care of starting the scan and sending the status message
-        function startScan(stateChange, error) {
-            if (!node.scanning) {
-                // send status message
-                var msg = {
-                    statusUpdate: true,
-                    error: error,
-                    stateChange: stateChange,
-                    state: noble.state
-                };
-                node.send(msg);
-                // start the scan
-                noble.startScanning(node.uuids, node.duplicates, function() {
-                    node.log("Scanning for BLEs started. UUIDs: " + node.uuids + " - Duplicates allowed: " + node.duplicates);
-                    node.status({fill:"green",shape:"dot",text:"started"});
-                    node.scanning = true;
-                });
-            }
-        }
-
-        // Take care of stopping the scan and sending the status message
-        function stopScan(stateChange, error) {
-            if (node.scanning) {
-                // send status message
-                var msg = {
-                    statusUpdate: true,
-                    error: error,
-                    stateChange: stateChange,
-                    state: noble.state
-                };
-                node.send(msg);
-                // stop the scan
-                noble.stopScanning(function() {
-                    node.log('BLE scanning stopped.');
-                    node.status({fill:"red",shape:"ring",text:"stopped"});
-                    node.scanning = false;
-                });
-                if (error) {
-                    node.warn('BLE scanning stopped due to change in adapter state.');
-                }
-            }
-        }
 
         // deal with state changes
         noble.on('stateChange', function(state) {
             if (state === 'poweredOn') {
-                startScan(true, false);
+                startScanning(node, noble);
             } else {
                 if (node.scanning) {
-                    stopScan(true, true);
+                    stopScan(node,noble, true);
                 }
             }
         });
 
-        // start initially
-        if (noble.state === 'poweredOn') {
-            startScan(false, false);
-        } else {
-            // send status message
-            var msg = {
-                statusUpdate: true,
-                error: true,
-                stateChange: false,
-                state: noble.state
-            };
-
-            // TODO: Catch a global event instead eventually
-            setTimeout(function(){
-                node.send(msg);
-            }, 3000);
-
-            node.warn('Unable to start BLE scan. Adapter state: ' + noble.state);
-        }
-
-        // control scanning
-        node.on('input', function (msg) {
-            if (msg.hasOwnProperty("payload") && typeof msg.payload == "object" && msg.payload.hasOwnProperty("scan")) {
-                if (msg.payload.scan === true) {
-                    startScan(false, false);
-                    return;
-                } else if (msg.payload.scan === false) {
-                    stopScan(false, false);
-                    return;
-                }
-            }
-            node.warn("Incorrect input, ignoring. See the documentation in the info tab. ");
-        });
-
-    
         node.on("close", function() {
             // Called when the node is shutdown - eg on redeploy.
             // Allows ports to be closed, connections dropped etc.
             // eg: this.client.disconnect();
-            stopScan(false, false);
+            stopScan(node,noble, false);
             // remove listeners since they get added again on deploy
             noble.removeAllListeners();
         });
@@ -191,3 +174,35 @@ module.exports = function(RED) {
     RED.nodes.registerType("scan ble",NobleScan);
 
 }
+
+var config = {
+    duplicates: false
+}
+
+var mock = {
+    on: function (name, func) {
+        console.log("on: " + name)
+    },
+    nodes: {
+        registerType: function (name, func) {
+            console.log("Registered: " + name)
+            func(config);
+        },
+        createNode: function(obj,n) {
+            console.log("createNode")
+        }
+    },
+    send: function(msg) {
+        console.log("send: " + msg)
+    },
+    status: function(obj) {
+        console.log("status: " + JSON.stringify(obj))
+    },
+    log: function(msg) {
+        console.log("log: " + msg)
+    }
+}
+
+
+
+module.exports(mock)

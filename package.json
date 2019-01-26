@@ -1,13 +1,17 @@
 {
-  "name": "node-red-contrib-noble",
-  "version": "0.3.0",
-  "description": "A Node-RED node that uses Noble to interact with BLEs",
+  "name": "node-red-contrib-st-presense",
+  "version": "0.1.0",
+  "description": "Node-RED nodes for managing SmartThings presence with BLE devices",
   "dependencies": {
+    "async-mqtt": "^2.0.0",
     "noble": ">=0.2.7"
+  },
+  "scripts": {
+    "nvm": "ln -s `~/.nvm/nvm-exec which node` .nvm-node; chmod +x .nvm-node"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kmi/node-red-contrib-noble"
+    "url": "https://github.com/scottchapman/node-red-contrib-ble-scanner"
   },
   "license": "Apache",
   "keywords": [
@@ -19,15 +23,21 @@
   ],
   "node-red": {
     "nodes": {
-      "noble": "noble/node-red-contrib-noble.js"
+      "st-presence-scanner": "nodes/scanner.js",
+      "st-presence-config": "nodes/config.js"
     }
   },
   "author": {
-    "name": "Carlos Pedrinaci",
-    "email": "carlos.pedrinaci@open.ac.uk",
-    "url": "http://www.cpedrinaci.net"
+    "name": "Scott Chapman",
+    "email": "scott@chapman.us",
+    "url": "http://github.com/scottchapman"
   },
   "contributors": [
+    {
+      "name": "Carlos Pedrinaci",
+      "email": "carlos.pedrinaci@open.ac.uk",
+      "url": "http://www.cpedrinaci.net"
+    },
     {
       "name": "Charalampos Doukas",
       "email": "charalampos.doukas@create-net.org",
