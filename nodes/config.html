@@ -13,16 +13,12 @@
 
 <script type="text/x-red" data-template-name="st-presence-config">
     <div class="form-row">
-        <label for="node-input-broker"><i class="fa fa-globe"></i> <span data-i18n="mqtt.label.broker"></span></label>
+        <label for="node-input-broker"><i class="fa fa-globe"></i> Broker</label>
         <input type="text" id="node-input-broker">
     </div>
     <div class="form-row">
-        <label for="node-input-uuids"><i class="fa fa-tasks"></i> Restrict by Service UUID</label>
-        <input type="text" id="node-input-uuids" placeholder="Comma separated list">
-    </div>
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name"></span></label>
-        <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
     </div>
 </script>
 
@@ -55,7 +51,6 @@
         category: 'SmartThings Presence Cat',
         defaults: {
             name: {value: ''},
-            uuids: {value:"", validate:RED.validators.regex(/^([a-fA-F0-9]{32}){0,1}(?:,[a-fA-F0-9]{32})*$/)},
             broker: {type: 'mqtt-broker', required: true}
         },
         color: '#d8bfd8',

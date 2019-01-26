@@ -23,7 +23,6 @@
   ],
   "node-red": {
     "nodes": {
-      "st-presence-scanner": "nodes/scanner.js",
       "st-presence-config": "nodes/config.js"
     }
   },
