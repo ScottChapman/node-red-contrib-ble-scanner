@@ -14,6 +14,14 @@
  * limitations under the License.
  **/
 
+function publish(connection, payload) {
+    var msg = {};
+    msg.payload = payload;
+    msg.qos = 1;
+    msg.retain = true;
+    msg.topic = 'presence-scanner/config'
+    connection.publish(msg);
+}
 module.exports = function (RED) {
     'use strict';
 
@@ -22,7 +30,7 @@ module.exports = function (RED) {
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
         this.map = config.map;
-        consile.dir(this.map);
+        console.dir(this.map);
         const node = this;
         if (this.brokerConn) {
             this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
@@ -30,11 +38,11 @@ module.exports = function (RED) {
                 node.brokerConn.register(this);
                 if (this.brokerConn.connected) {
                     node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
-                    node.on('input', function(msg) {
-                        msg.qos = 1;
-                        msg.retain = true;
-                        msg.topic = 'presence-scanner/config'
-                        this.brokerConn.publish(msg);
+                    if (typeof this.map === "object")
+                        publish(this.brokerConn,map)
+                    node.on('input', function(message) {
+                        this.map = message.payload;
+                        publish(this.brokerConn,msg.payload)
                     });
                 }
             } else {
