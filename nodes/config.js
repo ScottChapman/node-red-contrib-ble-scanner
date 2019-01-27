@@ -21,6 +21,8 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
+        this.map = config.map;
+        consile.dir(this.map);
         const node = this;
         if (this.brokerConn) {
             this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
