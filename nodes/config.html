@@ -17,6 +17,10 @@
         <input type="text" id="node-input-broker">
     </div>
     <div class="form-row">
+        <label for="node-input-map">Map</label>
+        <input type="text" id="node-input-map" style="width:70%">
+      </div>
+    <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
@@ -48,8 +52,13 @@
 
 <script type="text/javascript">
     RED.nodes.registerType('st-presence-config', {
-        category: 'SmartThings Presence Cat',
+        category: 'ST Presence',
         defaults: {
+            map: {
+                value: true, 
+                required: true, 
+                validate: RED.validators.typedInput('json')
+            },
             name: {value: ''},
             broker: {type: 'mqtt-broker', required: true}
         },
@@ -57,12 +66,19 @@
         inputs: 0,
         outputs: 0,
         icon: 'bridge.png',
-        paletteLabel: 'SmartThings Presence Pal',
+        paletteLabel: 'ST Presence Config',
         label() {
             return this.name || 'Config';
         },
         labelStyle() {
             return this.name ? 'node_label_italic' : '';
         },
+        oneditprepare: function() {
+            $('#node-input-map').typedInput({
+                default: 'json',
+                typeField: $("#node-input-map"),
+                types: ['json']
+            });
+        }
     });
 </script>
