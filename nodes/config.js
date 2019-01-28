@@ -32,28 +32,21 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
-        console.log("CONFIG:")
-        console.dir(config)
-        this.map = config.map;
         const node = this;
         if (this.brokerConn) {
             this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
             node.brokerConn.register(this);
-            console.log("Has topic, and registered")
+            console.log("registered")
             this.brokerConn.on("connect", () => {
-                node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
                 console.log("CONNECTED")
-                console.log("Type of map: " + typeof this.map)
-                if (typeof this.map === "object")
-                    publish(this.brokerConn,map)
+                node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
+                publish(this.brokerConn,config.map)
                 node.on('input', function(message) {
-                    this.map = message.payload;
                     publish(this.brokerConn,msg.payload)
                 });
             })
             this.on('close', done => {
                 if (node.brokerConn) {
-                    // node.brokerConn.unsubscribe(node.topic, node.id);
                     node.brokerConn.deregister(node, done);
                 }
             });
