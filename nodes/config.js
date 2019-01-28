@@ -19,7 +19,7 @@ function publish(connection, payload) {
     msg.payload = payload;
     msg.qos = 1;
     msg.retain = true;
-    msg.topic = 'presence-scanner/config'
+    msg.topic = '/presence-scanner/config'
     connection.publish(msg);
 }
 module.exports = function (RED) {
@@ -36,7 +36,8 @@ module.exports = function (RED) {
             this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
             if (this.topic) {
                 node.brokerConn.register(this);
-                if (this.brokerConn.connected) {
+                console.log("Has topic, and registered")
+                this.brokerConn.on("connect", () => {
                     node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
                     if (typeof this.map === "object")
                         publish(this.brokerConn,map)
@@ -44,7 +45,7 @@ module.exports = function (RED) {
                         this.map = message.payload;
                         publish(this.brokerConn,msg.payload)
                     });
-                }
+                })
             } else {
                 this.error(RED._('mqtt.errors.not-defined'));
             }
