@@ -35,7 +35,7 @@ module.exports = function (RED) {
         const node = this;
         if (this.brokerConn) {
             this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-            node.brokerConn.register(this);
+            this.brokerConn.register(this);
             console.log("registered")
             this.brokerConn.on("connect", () => {
                 console.log("CONNECTED")
