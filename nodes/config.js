@@ -15,6 +15,7 @@
  **/
 
 function publish(connection, payload) {
+    console.log("sending...")
     connection.publish('/presence-scanner/config', payload, {
         qos:1,
         retain: true
@@ -41,6 +42,8 @@ module.exports = function (RED) {
             console.log("Has topic, and registered")
             this.brokerConn.on("connect", () => {
                 node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
+                console.log("CONNECTED")
+                console.log("Type of map: " + typeof this.map)
                 if (typeof this.map === "object")
                     publish(this.brokerConn,map)
                 node.on('input', function(message) {
