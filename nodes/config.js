@@ -16,10 +16,13 @@
 
 function publish(connection, payload) {
     console.log("sending...")
-    connection.publish('/presence-scanner/config', payload, {
-        qos:1,
-        retain: true
-    }, (err) => {
+    var msg = {
+        qos: 1,
+        retain: true,
+        topic: '/presence-scanner/config'
+    }
+    msg.payload = payload;
+    connection.publish(msg , (err) => {
         console.log("SENT")
         console.dir(err)
     })
@@ -35,16 +38,19 @@ module.exports = function (RED) {
         const node = this;
         if (this.brokerConn) {
             this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-            this.brokerConn.register(this);
             console.log("registered")
-            this.brokerConn.on("connect", () => {
+            if (this.brokerConn.connected) {
                 console.log("CONNECTED")
                 node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
                 publish(this.brokerConn,config.map)
                 node.on('input', function(message) {
                     publish(this.brokerConn,msg.payload)
                 });
-            })
+            }
+            else {
+                console.log("Not connected...")
+            }
+            this.brokerConn.register(this);
             this.on('close', done => {
                 if (node.brokerConn) {
                     node.brokerConn.deregister(node, done);
