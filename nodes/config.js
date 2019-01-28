@@ -15,13 +15,15 @@
  **/
 
 function publish(connection, payload) {
-    var msg = {};
-    msg.payload = payload;
-    msg.qos = 1;
-    msg.retain = true;
-    msg.topic = '/presence-scanner/config'
-    connection.publish(msg);
+    connection.publish('/presence-scanner/config', payload, {
+        qos:1,
+        retain: true
+    }, (err) => {
+        console.log("SENT")
+        console.dir(err)
+    })
 }
+
 module.exports = function (RED) {
     'use strict';
 
@@ -29,26 +31,23 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
+        console.log("CONFIG:")
+        console.dir(config)
         this.map = config.map;
-        console.dir(this.map);
         const node = this;
         if (this.brokerConn) {
             this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-            if (this.topic) {
-                node.brokerConn.register(this);
-                console.log("Has topic, and registered")
-                this.brokerConn.on("connect", () => {
-                    node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
-                    if (typeof this.map === "object")
-                        publish(this.brokerConn,map)
-                    node.on('input', function(message) {
-                        this.map = message.payload;
-                        publish(this.brokerConn,msg.payload)
-                    });
-                })
-            } else {
-                this.error(RED._('mqtt.errors.not-defined'));
-            }
+            node.brokerConn.register(this);
+            console.log("Has topic, and registered")
+            this.brokerConn.on("connect", () => {
+                node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
+                if (typeof this.map === "object")
+                    publish(this.brokerConn,map)
+                node.on('input', function(message) {
+                    this.map = message.payload;
+                    publish(this.brokerConn,msg.payload)
+                });
+            })
             this.on('close', done => {
                 if (node.brokerConn) {
                     // node.brokerConn.unsubscribe(node.topic, node.id);
