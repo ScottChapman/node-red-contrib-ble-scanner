@@ -19,7 +19,7 @@ var mqtt = require('mqtt')
 function publish(node, payload) {
     console.log("sending...")
     console.dir(node.brokerConn.options)
-    var options = Object.assign(node.brokerConn.options)
+    var options = Object.assign({},node.brokerConn.options)
     options.clientId = "mqtt_st_precence"
     console.dir(options)
     console.dir(node.brokerConn.options)
