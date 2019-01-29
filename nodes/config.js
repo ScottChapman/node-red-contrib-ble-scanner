@@ -22,7 +22,8 @@ function publish(node, payload) {
     var options = Object.assign(node.brokerConn.options)
     options.clientId = "mqtt_st_precence"
     console.dir(options)
-    var client  = mqtt.connect(node.brokerConn.brokerurl, options);
+    console.dir(node.brokerConn.options)
+    var client  = mqtt.connect(node.brokerConn.brokerurl, {clientId: "MyUniqClient"});
     client.on('connect', function () {
         node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
         console.log("CONNECTED")
