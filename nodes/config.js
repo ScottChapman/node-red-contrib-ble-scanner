@@ -14,18 +14,24 @@
  * limitations under the License.
  **/
 
+var mqtt = require('mqtt')
+
 function publish(connection, payload) {
     console.log("sending...")
-    var msg = {
-        qos: 1,
-        retain: true,
-        topic: '/presence-scanner/config'
-    }
-    msg.payload = payload;
-    connection.publish(msg , (err) => {
-        console.log("SENT")
-        console.dir(err)
+    client.on('connect', function () {
+        this.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
+        console.log("CONNECTED")
+        client.publish('/presence-scanner/config', payload, { qos: 1, retain: true }, (err) => {
+            console.log("SENT")
+            console.dir(err)
+            client.end();
+        })
     })
+    client.on('close', function () {
+        this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
+        console.log("Disconnected")
+    })
+    var client  = mqtt.connect(this.brokerConn.brokerurl ,this.brokerConn.options);
 }
 
 module.exports = function (RED) {
@@ -35,30 +41,14 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
-        const node = this;
         if (this.brokerConn) {
-            this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-            console.log("registered")
-            if (this.brokerConn.connected) {
-                console.log("CONNECTED")
-                node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
-                publish(this.brokerConn,config.map)
-                node.on('input', function(message) {
-                    publish(this.brokerConn,msg.payload)
-                });
-            }
-            else {
-                console.log("Not connected...")
-            }
-            this.brokerConn.register(this);
-            this.on('close', done => {
-                if (node.brokerConn) {
-                    node.brokerConn.deregister(node, done);
-                }
-            });
+            publish(this.brokerConn,config.map)
         } else {
             this.error(RED._('mqtt.errors.missing-config'));
         }
+        this.on('input', function(message) {
+            publish(this.brokerConn,msg.payload)
+        });
     }
     RED.nodes.registerType('st-presence-config', STCONFIG);
 };
