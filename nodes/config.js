@@ -25,7 +25,6 @@ function publish(node, payload) {
         client.publish('/presence-scanner/config', payload, { qos: 1, retain: true }, (err) => {
             console.log("SENT")
             console.dir(err)
-            client.end();
         })
     })
     client.on('close', function () {
