@@ -42,11 +42,13 @@ module.exports = function (RED) {
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
         if (this.brokerConn) {
+            console.log("publishing config from node")
             publish(this,config.map)
         } else {
             this.error(RED._('mqtt.errors.missing-config'));
         }
         this.on('input', function(message) {
+            console.log("publishing from input")
             publish(this,message.payload)
         });
     }
