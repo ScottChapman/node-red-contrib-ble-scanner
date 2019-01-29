@@ -16,9 +16,9 @@
 
 var mqtt = require('mqtt')
 
-function publish(connection, payload) {
+function publish(node, payload) {
     console.log("sending...")
-    var client  = mqtt.connect(connection.brokerurl ,connection.options);
+    var client  = mqtt.connect(node.brokerConn.brokerurl ,node.brokerConn.options);
     client.on('connect', function () {
         this.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
         console.log("CONNECTED")
@@ -42,12 +42,12 @@ module.exports = function (RED) {
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
         if (this.brokerConn) {
-            publish(this.brokerConn,config.map)
+            publish(this,config.map)
         } else {
             this.error(RED._('mqtt.errors.missing-config'));
         }
         this.on('input', function(message) {
-            publish(this.brokerConn,msg.payload)
+            publish(this,message.payload)
         });
     }
     RED.nodes.registerType('st-presence-config', STCONFIG);
