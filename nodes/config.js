@@ -18,7 +18,7 @@ var mqtt = require('mqtt')
 
 function publish(connection, payload) {
     console.log("sending...")
-    var client  = mqtt.connect(this.brokerConn.brokerurl ,this.brokerConn.options);
+    var client  = mqtt.connect(connection.brokerurl ,connection.options);
     client.on('connect', function () {
         this.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
         console.log("CONNECTED")
