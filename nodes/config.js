@@ -20,7 +20,7 @@ function publish(node, payload) {
     console.log("sending...")
     var client  = mqtt.connect(node.brokerConn.brokerurl ,node.brokerConn.options);
     client.on('connect', function () {
-        this.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
+        node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
         console.log("CONNECTED")
         client.publish('/presence-scanner/config', payload, { qos: 1, retain: true }, (err) => {
             console.log("SENT")
@@ -29,7 +29,7 @@ function publish(node, payload) {
         })
     })
     client.on('close', function () {
-        this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
+        node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
         console.log("Disconnected")
     })
 }
