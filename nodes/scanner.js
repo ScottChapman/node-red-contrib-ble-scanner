@@ -87,7 +87,8 @@ function getConfig(node) {
 
     node.client.on('message', (topic,message) => {
         node.log("Updated config")
-        node.map = message;
+        node.map = JSON.parse(message);
+        console.dir(node.map)
     });
 
     node.client.on('close', function () {
