@@ -61,10 +61,10 @@ function startScanning(node,noble) {
     scanIteration(node,noble)
     interval = setInterval(() => {
         // send heartbeat
-        node.client.publish('/presence-scanner/heartbeat', {
+        node.client.publish('/presence-scanner/heartbeat', JSON.stringify({
             host: node.machineId,
             timestamp: new Date().getTime() 
-        },{qos: 1, retain: false})
+        }),{qos: 1, retain: false})
         if (node.map) {
             node.log("interval")
             scanIteration(node,noble);
