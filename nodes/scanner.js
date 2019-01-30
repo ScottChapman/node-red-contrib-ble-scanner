@@ -24,8 +24,8 @@ const util = require('util');
 const mqtt = require('mqtt')
 const setTimeoutPromise = util.promisify(setTimeout);
 const setImmediatePromise = util.promisify(setImmediate);
-const startDelay = 15;
-const stopDelay = 10;
+const startDelay = 30;
+const stopDelay = 25;
 
 // Take care of starting the scan and sending the status message
 function startScan(node,noble) {
