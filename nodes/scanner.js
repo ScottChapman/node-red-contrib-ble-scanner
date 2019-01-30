@@ -29,11 +29,11 @@ const stopDelay = 10;
 
 // Take care of starting the scan and sending the status message
 function startScan(node,noble) {
-    console.log("Inside startScan")
+    node.log("Inside startScan")
     if (!node.scanning) {
         // start the scan
         noble.startScanning([], false, function() {
-            node.log("Scanning for BLEs started. UUIDs: " + node.uuids + " - Duplicates allowed: " + node.duplicates);
+            node.log("Scanning for BLEs started.");
             node.status({fill:"green",shape:"dot",text:"started"});
             node.scanning = true;
         });
@@ -42,7 +42,7 @@ function startScan(node,noble) {
 
 // Take care of stopping the scan and sending the status message
 function stopScan(node,noble, error) {
-    console.log("Inside stopScan")
+    node.log("Inside stopScan")
     if (node.scanning) {
         // stop the scan
         noble.stopScanning(function() {
@@ -65,7 +65,7 @@ function startScanning(node,noble) {
             timestamp: new Date().getTime() 
         },{qos: 1, retain: false})
         if (node.map) {
-            console.log("interval")
+            node.log("interval")
             scanIteration(node,noble);
         }
     },startDelay * 1000)
@@ -98,10 +98,10 @@ function getConfig(node) {
 
 function scanIteration(node,noble) {
     return new Promise((resolve,reject) => {
-        console.log("Scan iteration start")
+        node.log("Scan iteration start")
         startScan(node,noble);
         setTimeoutPromise(stopDelay*1000).then(() => {
-            console.log("Scan iteration stop")
+            node.log("Scan iteration stop")
             stopScan(node,noble)
         })
 
