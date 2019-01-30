@@ -37,16 +37,13 @@ function publish(node, payload) {
 }
 
 function fixMap(map) {
-    console.dir(map)
     if (typeof map === "string")
         map = JSON.parse(map)
     var result = {};
     for (var id of _.keys(map)) {
         var newID = id.toLowerCase().replace(/:/g,"");
-        console.log("Was: " + id + " converted to: " + newID)
         result[newID] = map[id];
     }
-    console.dir(result)
     return JSON.stringify(result);
 }
 
