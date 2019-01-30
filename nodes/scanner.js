@@ -209,6 +209,8 @@ module.exports = function(RED) {
 
 }
 
+/*
+
 var config = {
     duplicates: false
 }
@@ -240,3 +242,4 @@ var mock = {
 
 
 module.exports(mock)
+*/
