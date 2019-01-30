@@ -17,24 +17,20 @@
 var mqtt = require('mqtt')
 
 function publish(node, payload) {
-    console.log("sending...")
-    console.dir(node.brokerConn.options)
     var options = Object.assign({},node.brokerConn.options)
     options.clientId = "mqtt_st_precence"
-    console.dir(options)
-    console.dir(node.brokerConn.options)
     var client  = mqtt.connect(node.brokerConn.brokerurl, {clientId: "MyUniqClient"});
     client.on('connect', function () {
+        node.log("connected")
         node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
-        console.log("CONNECTED")
         client.publish('/presence-scanner/config', payload, { qos: 1, retain: true }, (err) => {
-            console.log("SENT")
-            console.dir(err)
+            node.log("SENT")
+            client.end();
         })
     })
     client.on('close', function () {
         node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-        console.log("Disconnected")
+        node.log("Disconnected")
     })
 }
 
@@ -46,13 +42,13 @@ module.exports = function (RED) {
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
         if (this.brokerConn) {
-            console.log("publishing config from node")
+            this.log("publishing config from node")
             publish(this,config.map)
         } else {
             this.error(RED._('mqtt.errors.missing-config'));
         }
         this.on('input', function(message) {
-            console.log("publishing from input")
+            this.log("publishing from input")
             publish(this,message.payload)
         });
     }
