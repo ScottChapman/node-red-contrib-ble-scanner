@@ -182,7 +182,7 @@ module.exports = function(RED) {
                 }
     
                 // Generate output event
-                node.client.publish('/presence-scanner/devices',msg, {qos: 1, retain: false})
+                node.client.publish('/presence-scanner/devices',JSON.stringify(msg), {qos: 1, retain: false})
                 node.send(msg);
             }
         });
