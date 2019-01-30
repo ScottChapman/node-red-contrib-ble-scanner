@@ -140,6 +140,7 @@ module.exports = function(RED) {
         noble.on('discover', function(peripheral) {
             if (node.map && node.map.hasOwnProperty(peripheral.uuid)) {
                 var msg = { payload:{peripheralUuid:peripheral.uuid, localName: peripheral.advertisement.localName} };
+                node.log("Found uuid: " + peripheral.uuid)
                 msg.STDeviceName = node.map[peripheral.uuid]
                 msg.peripheralUuid = peripheral.uuid;
                 msg.localName = peripheral.advertisement.localName;
