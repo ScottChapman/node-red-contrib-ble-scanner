@@ -20,8 +20,8 @@ const _ = require('lodash')
 
 function publish(node, payload) {
     var options = Object.assign({},node.brokerConn.options)
-    options.clientId = "mqtt_st_precence"
-    var client  = mqtt.connect(node.brokerConn.brokerurl, {clientId: "MyUniqClient"});
+    options.clientId = 'STPresenceConfig_' + (1+Math.random()*4294967295).toString(16);
+    var client  = mqtt.connect(node.brokerConn.brokerurl, options);
     client.on('connect', function () {
         node.log("connected")
         node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});

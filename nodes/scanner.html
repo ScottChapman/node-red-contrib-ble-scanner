@@ -31,16 +31,12 @@
 
     <!-- Limit to list of UUIDs -->
     <div class="form-row">
-        <label for="node-input-uuids"><i class="fa fa-tasks"></i> Restrict by Service UUID</label>
-        <input type="text" id="node-input-uuids" placeholder="Comma separated list">
+        <label for="node-input-broker"><i class="fa fa-globe"></i> Broker</label>
+        <input type="text" id="node-input-broker">
     </div>
-    <div class="form-tips">Leave empty for scanning all devices offering any service.</div>
-
-    <!-- Allow duplicates -->
     <div class="form-row">
-        <label>&nbsp;</label>
-        <input type="checkbox" id="node-input-duplicates" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-duplicates" style="width: 70%;">Allow duplicates?</label>
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
     </div>
 
     <!-- By convention, most nodes have a 'name' property. The following div -->
@@ -95,23 +91,19 @@
 <script type="text/javascript">
 
     RED.nodes.registerType('scan ble',{
-        category: 'advanced',      // the palette category
+        category: 'ST Presence',      // the palette category
+        paletteLabel: 'Scanner',
         color:"#C0DEED",
         defaults: {             // defines the editable properties of the node
-            uuids: {value:"", validate:RED.validators.regex(/^([a-fA-F0-9]{32}){0,1}(?:,[a-fA-F0-9]{32})*$/)},
-            duplicates: {value:false},
-            name: {value:""}
+            name: {value: ''},
+            broker: {type: 'mqtt-broker', required: true}
         },
-        inputs:1,               // set the number of inputs - only 0 or 1
+        inputs:0,               // set the number of inputs - only 0 or 1
         outputs:1,              // set the number of outputs - 0 to n
         // set the icon (held in icons dir below where you save the node)
         icon: "bluetooth.png",     // saved in  icons/myicon.png
         label: function() {     // sets the default label contents
-            if (this.name) {
-                return this.name;
-            } else {
-                return "Scan BLEs";
-            }
+            return this.name || "ST Presence Scanner";
         },
         labelStyle: function() { // sets the class to apply to the label
             return this.name ? "node_label_italic" : "";

@@ -21,6 +21,7 @@
  * based on the initial node by Charalampos Doukas http://blog.buildinginternetofthings.com/2013/10/12/using-node-red-to-scan-for-ble-devices/
  */
 const util = require('util');
+const mqtt = require('mqtt')
 const setTimeoutPromise = util.promisify(setTimeout);
 const setImmediatePromise = util.promisify(setImmediate);
 const startDelay = 15;
@@ -55,14 +56,44 @@ function stopScan(node,noble, error) {
     }
 }
 
-
 function startScanning(node,noble) {
-    console.log("first")
     scanIteration(node,noble)
-    setInterval(() => {
-        console.log("interval")
-        scanIteration(node,noble);
+    interval = setInterval(() => {
+        // send heartbeat
+        node.client.publish('/presence-scanner/heartbeat', {
+            host: node.machineId,
+            timestamp: new Date().getTime() 
+        },{qos: 1, retain: false})
+        if (node.map) {
+            console.log("interval")
+            scanIteration(node,noble);
+        }
     },startDelay * 1000)
+}
+
+function getConfig(node) {
+    var interval;
+    node.client.on('connect', function () {
+        node.log("connected")
+        node.client.subscribe('/presence-scanner/config', (err) => {
+            if (err)
+                node.error(err);
+            else
+                node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
+        });
+    })
+
+    node.client.on('message', (topic,message) => {
+        node.log("Updated config")
+        node.map = message;
+    });
+
+    node.client.on('close', function () {
+        node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
+        if (interval)
+            clearInterval(interval);
+        node.log("Disconnected")
+    })
 }
 
 function scanIteration(node,noble) {
@@ -88,81 +119,84 @@ module.exports = function(RED) {
         // Create a RED node
         RED.nodes.createNode(this,n);
 
-        // Store local copies of the node configuration (as defined in the .html)
-        /*
-        this.duplicates = n.duplicates;
-        this.uuids = [];
-        if (n.uuids != undefined && n.uuids !== "") {
-            this.uuids = n.uuids.split(',');    //obtain array of uuids
-        }
-        */
-
         // var node = this;
-        var node = RED;
-        var machineId = os.hostname();
-        var scanning = false;
+        this.broker = config.broker;
+        this.brokerConn = RED.nodes.getNode(this.broker);
+        this.machineId = os.hostname();
+        this.scanning = false;
+        this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
+        var options = Object.assign({},this.brokerConn.options)
+        options.clientId = 'STPresenceScan_' + (1+Math.random()*4294967295).toString(16);
+        this.client  = mqtt.connect(this.brokerConn.brokerurl, options);
+
+        // get config
+        getConfig(this);
 
         noble.on('discover', function(peripheral) {
-            var msg = { payload:{peripheralUuid:peripheral.uuid, localName: peripheral.advertisement.localName} };
-            msg.peripheralUuid = peripheral.uuid;
-            msg.localName = peripheral.advertisement.localName;
-            msg.detectedAt = new Date().getTime();
-            msg.detectedBy = machineId;
-            msg.advertisement = peripheral.advertisement;
-            msg.rssi = peripheral.rssi;
-
-            // Check the BLE follows iBeacon spec
-            if (peripheral.manufacturerData) {
-                // http://www.theregister.co.uk/2013/11/29/feature_diy_apple_ibeacons/
-                if (peripheral.manufacturerData.length >= 25) {
-                    var proxUuid = peripheral.manufacturerData.slice(4, 20).toString('hex');
-                    var major = peripheral.manufacturerData.readUInt16BE(20);
-                    var minor = peripheral.manufacturerData.readUInt16BE(22);
-                    var measuredPower = peripheral.manufacturerData.readInt8(24);
-
-                    var accuracy = Math.pow(12.0, 1.5 * ((rssi / measuredPower) - 1));
-                    var proximity = null;
-
-                    if (accuracy < 0) {
-                        proximity = 'unknown';
-                    } else if (accuracy < 0.5) {
-                        proximity = 'immediate';
-                    } else if (accuracy < 4.0) {
-                        proximity = 'near';
-                    } else {
-                        proximity = 'far';
+            if (this.map && this.map.hasOwnProperty(peripheral.uuid)) {
+                var msg = { payload:{peripheralUuid:peripheral.uuid, localName: peripheral.advertisement.localName} };
+                msg.STDeviceName = this.map[peripheral.uuid]
+                msg.peripheralUuid = peripheral.uuid;
+                msg.localName = peripheral.advertisement.localName;
+                msg.detectedAt = new Date().getTime();
+                msg.detectedBy = this.machineId;
+                msg.advertisement = peripheral.advertisement;
+                msg.rssi = peripheral.rssi;
+    
+                // Check the BLE follows iBeacon spec
+                if (peripheral.manufacturerData) {
+                    // http://www.theregister.co.uk/2013/11/29/feature_diy_apple_ibeacons/
+                    if (peripheral.manufacturerData.length >= 25) {
+                        var proxUuid = peripheral.manufacturerData.slice(4, 20).toString('hex');
+                        var major = peripheral.manufacturerData.readUInt16BE(20);
+                        var minor = peripheral.manufacturerData.readUInt16BE(22);
+                        var measuredPower = peripheral.manufacturerData.readInt8(24);
+    
+                        var accuracy = Math.pow(12.0, 1.5 * ((rssi / measuredPower) - 1));
+                        var proximity = null;
+    
+                        if (accuracy < 0) {
+                            proximity = 'unknown';
+                        } else if (accuracy < 0.5) {
+                            proximity = 'immediate';
+                        } else if (accuracy < 4.0) {
+                            proximity = 'near';
+                        } else {
+                            proximity = 'far';
+                        }
+    
+                        msg.manufacturerUuid = proxUuid;
+                        msg.major = major;
+                        msg.minor = minor;
+                        msg.measuredPower = measuredPower;
+                        msg.accuracy = accuracy;
+                        msg.proximity = proximity;
                     }
-
-                    msg.manufacturerUuid = proxUuid;
-                    msg.major = major;
-                    msg.minor = minor;
-                    msg.measuredPower = measuredPower;
-                    msg.accuracy = accuracy;
-                    msg.proximity = proximity;
                 }
+    
+                // Generate output event
+                this.client.publish('/presence-scanner/devices',message, {qos: 1, retain: false})
+                this.send(msg);
             }
-
-            // Generate output event
-            node.send(msg);
         });
 
 
         // deal with state changes
         noble.on('stateChange', function(state) {
             if (state === 'poweredOn') {
-                startScanning(node, noble);
+                startScanning(this, noble);
             } else {
-                if (node.scanning) {
-                    stopScan(node,noble, true);
+                if (this.scanning) {
+                    stopScan(this,noble, true);
                 }
             }
         });
 
-        node.on("close", function() {
+        this.on("close", function() {
             // Called when the node is shutdown - eg on redeploy.
             // Allows ports to be closed, connections dropped etc.
             // eg: this.client.disconnect();
-            stopScan(node,noble, false);
+            stopScan(this,noble, false);
             // remove listeners since they get added again on deploy
             noble.removeAllListeners();
         });
