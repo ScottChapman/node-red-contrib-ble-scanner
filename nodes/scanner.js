@@ -57,6 +57,7 @@ function stopScan(node,noble, error) {
 }
 
 function startScanning(node,noble) {
+    node.log("StartScanning")
     scanIteration(node,noble)
     interval = setInterval(() => {
         // send heartbeat
@@ -72,6 +73,7 @@ function startScanning(node,noble) {
 }
 
 function getConfig(node) {
+    node.log("Get Config")
     var interval;
     node.client.on('connect', function () {
         node.log("connected")
@@ -97,6 +99,7 @@ function getConfig(node) {
 }
 
 function scanIteration(node,noble) {
+    node.log("ScanIteration")
     return new Promise((resolve,reject) => {
         node.log("Scan iteration start")
         startScan(node,noble);
@@ -120,6 +123,7 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,config);
 
         // var node = this;
+        var node = this;
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
         this.machineId = os.hostname();
@@ -131,16 +135,16 @@ module.exports = function(RED) {
         this.log("Setting up scanner node")
 
         // get config
-        getConfig(this);
+        getConfig(node);
 
         noble.on('discover', function(peripheral) {
-            if (this.map && this.map.hasOwnProperty(peripheral.uuid)) {
+            if (node.map && node.map.hasOwnProperty(peripheral.uuid)) {
                 var msg = { payload:{peripheralUuid:peripheral.uuid, localName: peripheral.advertisement.localName} };
-                msg.STDeviceName = this.map[peripheral.uuid]
+                msg.STDeviceName = node.map[peripheral.uuid]
                 msg.peripheralUuid = peripheral.uuid;
                 msg.localName = peripheral.advertisement.localName;
                 msg.detectedAt = new Date().getTime();
-                msg.detectedBy = this.machineId;
+                msg.detectedBy = node.machineId;
                 msg.advertisement = peripheral.advertisement;
                 msg.rssi = peripheral.rssi;
     
@@ -176,19 +180,20 @@ module.exports = function(RED) {
                 }
     
                 // Generate output event
-                this.client.publish('/presence-scanner/devices',message, {qos: 1, retain: false})
-                this.send(msg);
+                node.client.publish('/presence-scanner/devices',message, {qos: 1, retain: false})
+                node.send(msg);
             }
         });
 
 
         // deal with state changes
         noble.on('stateChange', function(state) {
+            node.log("State changed on BTLE controller")
             if (state === 'poweredOn') {
-                startScanning(this, noble);
+                startScanning(node, noble);
             } else {
-                if (this.scanning) {
-                    stopScan(this,noble, true);
+                if (node.scanning) {
+                    stopScan(node,noble, true);
                 }
             }
         });
@@ -197,7 +202,7 @@ module.exports = function(RED) {
             // Called when the node is shutdown - eg on redeploy.
             // Allows ports to be closed, connections dropped etc.
             // eg: this.client.disconnect();
-            stopScan(this,noble, false);
+            stopScan(node,noble, false);
             // remove listeners since they get added again on deploy
             noble.removeAllListeners();
         });
