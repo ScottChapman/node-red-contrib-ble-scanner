@@ -115,7 +115,7 @@ module.exports = function(RED) {
     var os = require('os');
     
     // The main node definition - most things happen in here
-    function NobleScan(n) {
+    function STPresenceScan(n) {
         // Create a RED node
         RED.nodes.createNode(this,n);
 
@@ -205,7 +205,7 @@ module.exports = function(RED) {
     
     // Register the node by name. This must be called before overriding any of the
     // Node functions.
-    RED.nodes.registerType("scan ble",NobleScan);
+    RED.nodes.registerType("st-presence-scanner",STPresenceScan);
 
 }
 
