@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "description": "Node-RED nodes for managing SmartThings presence with BLE devices",
   "dependencies": {
-    "async-mqtt": "^2.0.0",
-    "noble": ">=0.2.7"
+    "lodash": "^4.17.11",
+    "noble": ">=0.2.7",
+    "validator": "^10.11.0"
   },
   "scripts": {
     "nvm": "ln -s `~/.nvm/nvm-exec which node` .nvm-node; chmod +x .nvm-node"
