@@ -4,6 +4,7 @@
   "description": "Node-RED nodes for managing SmartThings presence with BLE devices",
   "dependencies": {
     "lodash": "^4.17.11",
+    "mqtt": "^2.18.8",
     "noble": ">=0.2.7",
     "validator": "^10.11.0"
   },
