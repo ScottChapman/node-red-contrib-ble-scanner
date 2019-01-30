@@ -115,9 +115,9 @@ module.exports = function(RED) {
     var os = require('os');
     
     // The main node definition - most things happen in here
-    function STPresenceScan(n) {
+    function STPresenceScan(config) {
         // Create a RED node
-        RED.nodes.createNode(this,n);
+        RED.nodes.createNode(this,config);
 
         // var node = this;
         this.broker = config.broker;
