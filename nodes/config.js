@@ -47,7 +47,7 @@ function fixMap(map) {
         result[newID] = map[id];
     }
     console.dir(result)
-    return result;
+    return JSON.stringify(result);
 }
 
 module.exports = function (RED) {
