@@ -24,8 +24,8 @@ const util = require('util');
 const mqtt = require('mqtt')
 const setTimeoutPromise = util.promisify(setTimeout);
 const setImmediatePromise = util.promisify(setImmediate);
-const startDelay = 30;
-const stopDelay = 25;
+const startDelay = 60;
+const stopDelay = 55;
 
 // Take care of starting the scan and sending the status message
 function startScan(node,noble) {
@@ -141,8 +141,9 @@ module.exports = function(RED) {
         noble.on('discover', function(peripheral) {
             node.log("Found uuid: " + peripheral.uuid)
             if (node.map && node.map.hasOwnProperty(peripheral.uuid)) {
-                var msg = { payload:{peripheralUuid:peripheral.uuid, localName: peripheral.advertisement.localName} };
+                var msg = {};
                 msg.STDeviceName = node.map[peripheral.uuid]
+                node.log("Found device: " + msg.STDeviceName)
                 msg.peripheralUuid = peripheral.uuid;
                 msg.localName = peripheral.advertisement.localName;
                 msg.detectedAt = new Date().getTime();

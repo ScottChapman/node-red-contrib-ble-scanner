@@ -6,6 +6,7 @@
     "lodash": "^4.17.11",
     "mqtt": "^2.18.8",
     "noble": ">=0.2.7",
+    "node-cache": "^4.2.0",
     "validator": "^10.11.0"
   },
   "scripts": {
@@ -26,6 +27,7 @@
   "node-red": {
     "nodes": {
       "st-presence-scanner": "nodes/scanner.js",
+      "st-presence-processor": "nodes/processor.js",
       "st-presence-config": "nodes/config.js"
     }
   },
