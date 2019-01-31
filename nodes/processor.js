@@ -45,7 +45,7 @@ function missingHost(node,host) {
 }
 
 function present(node,device) {
-    node.log($device.STDeviceName + " present!")
+    node.log(device.STDeviceName + " present!")
     var topic = `/SmartThings/presence/${device.STDeviceName}/presence`
     node.brokerConn.publish({
         topic: topic,
