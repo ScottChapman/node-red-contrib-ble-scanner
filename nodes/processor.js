@@ -147,7 +147,7 @@ module.exports = function (RED) {
                     node.log("Restoring state of device: " + device)
                     deviceCache.set(device,state.devices[device])
                 }
-                node.brokerConn.unsubscribe('/st-presence/state',2);
+                node.brokerConn.unsubscribe('/st-presence/state',id);
             },id)
         } else {
             node.error(RED._('mqtt.errors.missing-config'));
