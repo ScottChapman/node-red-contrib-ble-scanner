@@ -139,11 +139,11 @@ module.exports = function (RED) {
             this.brokerConn.subscribe('/st-presence/state',2, (topic,payload,packet) => {
                 node.log("Restoring state")
                 var state = JSON.parse(payload.toString());
-                for (var host of _keys(state.hosts)) {
+                for (var host of _.keys(state.hosts)) {
                     node.log("Restoring state of host: " + host)
                     hostCache.set(host,state.hosts[host])
                 }
-                for (var device of _keys(state.devices)) {
+                for (var device of _.keys(state.devices)) {
                     node.log("Restoring state of device: " + device)
                     deviceCache.set(device,state.devices[device])
                 }
