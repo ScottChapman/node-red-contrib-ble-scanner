@@ -32,6 +32,38 @@ function listen(node) {
     }
     deviceListener(node);
     heartbeatListener(node);
+    deviceCache.on("expired", (key,value) => {
+        notPresent(node,value);
+    })
+    hostCache.on("expired", (key,value) => {
+        missingHost(node,value);
+    })
+}
+
+function missingHost(node,host) {
+    node.error(`Haven't heard from host ${host.host}. Host might be down?`)
+}
+
+function present(node,device) {
+    node.log($device.STDeviceName + " present!")
+    var topic = `/SmartThings/presence/${device.STDeviceName}/presence`
+    node.brokerConn.publish({
+        topic: topic,
+        payload: 'present',
+        qos:1,
+        retain: false
+    })
+}
+
+function notPresent(node,device) {
+    node.log($device.STDeviceName + " NOT present!")
+    var topic = `/SmartThings/presence/${device.STDeviceName}/presence`
+    node.brokerConn.publish({
+        topic: topic,
+        payload: 'not_present',
+        qos:1,
+        retain: false
+    })
 }
 
 function deviceListener(node) {
@@ -41,6 +73,10 @@ function deviceListener(node) {
     node.brokerConn.subscribe(topic, 0, (topic,payload,packet) => {
         payload = JSON.parse(payload.toString());
         node.log("Got device")
+        if (!deviceCache.get(payload.STDeviceName)) {
+            present(node,payload);
+        }
+        deviceCache.set(payload.STDeviceName, payload);
         node.log(JSON.stringify(payload))
     },id)
     node.on('close', done => {
@@ -55,6 +91,7 @@ function heartbeatListener(node) {
     node.brokerConn.subscribe(topic, 0, (topic,payload,packet) => {
         payload = JSON.parse(payload.toString());
         node.log("Got heartbeat")
+        hostCache.set(payload.host,payload);
         node.log(JSON.stringify(payload))
     },id)
     node.on('close', done => {
