@@ -36,7 +36,7 @@ function saveState(node) {
     }
     node.log("Persisting State: " + JSON.stringify(state))
     node.brokerConn.publish({
-        topic: 'precense-scanner/state',
+        topic: '/st-presence/state',
         payload: JSON.stringify(state),
         qos:2,
         retain: true
