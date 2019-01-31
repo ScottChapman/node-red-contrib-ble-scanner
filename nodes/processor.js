@@ -133,10 +133,10 @@ module.exports = function (RED) {
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
         var node = this;
-        if (this.brokerConn) {
+        if (node.brokerConn) {
             listen(this)
             var id = 3;
-            this.brokerConn.subscribe('/st-presence/state',2, (topic,payload,packet) => {
+            node.brokerConn.subscribe('/st-presence/state',2, (topic,payload,packet) => {
                 node.log("Restoring state")
                 var state = JSON.parse(payload.toString());
                 for (var host of _.keys(state.hosts)) {
@@ -147,10 +147,10 @@ module.exports = function (RED) {
                     node.log("Restoring state of device: " + device)
                     deviceCache.set(device,state.devices[device])
                 }
-                node.unsubscribe('/st-presence/state',2);
+                node.brokerConn.unsubscribe('/st-presence/state',2);
             },id)
         } else {
-            this.error(RED._('mqtt.errors.missing-config'));
+            node.error(RED._('mqtt.errors.missing-config'));
         }
     }
     RED.nodes.registerType('st-presence-processor', STPROCESSOR);
