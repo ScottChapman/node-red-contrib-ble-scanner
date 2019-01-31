@@ -137,6 +137,7 @@ module.exports = function (RED) {
             listen(this)
             var id = 3;
             this.brokerConn.subscribe('/st-presence/state',2, (topic,payload,packet) => {
+                node.log("Restoring state")
                 var state = JSON.parse(payload.toString());
                 for (var host of _keys(state.hosts)) {
                     node.log("Restoring state of host: " + host)
