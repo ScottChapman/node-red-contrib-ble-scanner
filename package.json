@@ -7,6 +7,7 @@
     "mqtt": "^2.18.8",
     "noble": ">=0.2.7",
     "node-cache": "^4.2.0",
+    "split-lines": "^2.0.0",
     "validator": "^10.11.0"
   },
   "scripts": {
