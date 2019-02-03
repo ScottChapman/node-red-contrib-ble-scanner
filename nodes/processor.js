@@ -120,9 +120,6 @@ function heartbeatListener(node) {
     node.on('close', done => {
         node.brokerConn.unsubscribe(topic,id);
     })
-    setInterval(() => {
-        saveState(node)
-    },1*60*1000)
 }
 
 module.exports = function (RED) {
@@ -149,6 +146,12 @@ module.exports = function (RED) {
                 }
                 node.brokerConn.unsubscribe('/st-presence/state',id);
             },id)
+            setInterval(() => {
+                saveState(node)
+            },1*60*1000)
+            node.on("close", () => {
+                saveState(node);
+            })
         } else {
             node.error(RED._('mqtt.errors.missing-config'));
         }
