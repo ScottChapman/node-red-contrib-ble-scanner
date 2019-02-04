@@ -22,43 +22,40 @@
  */
 const util = require('util');
 const mqtt = require('mqtt')
+var bluetooth = require('../lib/bluetoothctl.js');
+var os = require('os');
 const setTimeoutPromise = util.promisify(setTimeout);
 const setImmediatePromise = util.promisify(setImmediate);
 const startDelay = 60;
 const stopDelay = 55;
 
 // Take care of starting the scan and sending the status message
-function startScan(node,noble) {
+function startScan(node) {
     node.log("Inside startScan")
     if (!node.scanning) {
         // start the scan
-        noble.startScanning([], false, function() {
-            node.log("Scanning for BLEs started.");
-            node.status({fill:"green",shape:"dot",text:"started"});
-            node.scanning = true;
-        });
+        node.log("Scanning for BLEs started.");
+        node.scanner.scanOn()
+        node.status({fill:"green",shape:"dot",text:"started"});
+        node.scanning = true;
     }
 }
 
 // Take care of stopping the scan and sending the status message
-function stopScan(node,noble, error) {
+function stopScan(node) {
     node.log("Inside stopScan")
     if (node.scanning) {
         // stop the scan
-        noble.stopScanning(function() {
-            node.log('BLE scanning stopped.');
-            node.status({fill:"red",shape:"ring",text:"stopped"});
-            node.scanning = false;
-        });
-        if (error) {
-            node.warn('BLE scanning stopped due to change in adapter state.');
-        }
+        noble.scanOff()
+        node.log('BLE scanning stopped.');
+        node.status({fill:"red",shape:"ring",text:"stopped"});
+        node.scanning = false;
     }
 }
 
-function startScanning(node,noble) {
+function startScanning(node) {
     node.log("StartScanning")
-    scanIteration(node,noble)
+    scanIteration(node)
     interval = setInterval(() => {
         // send heartbeat
         node.client.publish('/presence-scanner/heartbeat', JSON.stringify({
@@ -67,7 +64,7 @@ function startScanning(node,noble) {
         }),{qos: 1, retain: false})
         if (node.map) {
             node.log("interval")
-            scanIteration(node,noble);
+            scanIteration(node);
         }
     },startDelay * 1000)
 }
@@ -99,14 +96,14 @@ function getConfig(node) {
     })
 }
 
-function scanIteration(node,noble) {
+function scanIteration(node) {
     node.log("ScanIteration")
     return new Promise((resolve,reject) => {
         node.log("Scan iteration start")
-        startScan(node,noble);
+        startScan(node);
         setTimeoutPromise(stopDelay*1000).then(() => {
             node.log("Scan iteration stop")
-            stopScan(node,noble)
+            stopScan(node)
         })
 
     })
@@ -115,13 +112,12 @@ function scanIteration(node,noble) {
 module.exports = function(RED) {
     "use strict";
 
-    var noble = require('noble');
-    var os = require('os');
     
     // The main node definition - most things happen in here
     function STPresenceScan(config) {
         // Create a RED node
         RED.nodes.createNode(this,config);
+        this.scanner = new bluetooth();
 
         // var node = this;
         var node = this;
@@ -138,76 +134,24 @@ module.exports = function(RED) {
         // get config
         getConfig(node);
 
-        noble.on('discover', function(peripheral) {
-            node.log("Found uuid: " + peripheral.uuid)
-            if (node.map && node.map.hasOwnProperty(peripheral.uuid)) {
-                var msg = {};
-                msg.STDeviceName = node.map[peripheral.uuid]
-                node.log("Found device: " + msg.STDeviceName)
-                msg.peripheralUuid = peripheral.uuid;
-                msg.localName = peripheral.advertisement.localName;
-                msg.detectedAt = new Date().getTime();
-                msg.detectedBy = node.machineId;
-                msg.advertisement = peripheral.advertisement;
-                msg.rssi = peripheral.rssi;
-    
-                // Check the BLE follows iBeacon spec
-                if (peripheral.manufacturerData) {
-                    // http://www.theregister.co.uk/2013/11/29/feature_diy_apple_ibeacons/
-                    if (peripheral.manufacturerData.length >= 25) {
-                        var proxUuid = peripheral.manufacturerData.slice(4, 20).toString('hex');
-                        var major = peripheral.manufacturerData.readUInt16BE(20);
-                        var minor = peripheral.manufacturerData.readUInt16BE(22);
-                        var measuredPower = peripheral.manufacturerData.readInt8(24);
-    
-                        var accuracy = Math.pow(12.0, 1.5 * ((rssi / measuredPower) - 1));
-                        var proximity = null;
-    
-                        if (accuracy < 0) {
-                            proximity = 'unknown';
-                        } else if (accuracy < 0.5) {
-                            proximity = 'immediate';
-                        } else if (accuracy < 4.0) {
-                            proximity = 'near';
-                        } else {
-                            proximity = 'far';
-                        }
-    
-                        msg.manufacturerUuid = proxUuid;
-                        msg.major = major;
-                        msg.minor = minor;
-                        msg.measuredPower = measuredPower;
-                        msg.accuracy = accuracy;
-                        msg.proximity = proximity;
-                    }
-                }
-    
+        this.scanner.on('device', function(device) {
+            node.log("Found name: " + device.name)
+            if (node.map && node.map.hasOwnProperty(device.id)) {
                 // Generate output event
-                node.client.publish('/presence-scanner/devices',JSON.stringify(msg), {qos: 1, retain: false})
+                node.client.publish('/presence-scanner/devices',JSON.stringify(device), {qos: 1, retain: false})
                 node.send(msg);
             }
         });
 
-
-        // deal with state changes
-        noble.on('stateChange', function(state) {
-            node.log("State changed on BTLE controller")
-            if (state === 'poweredOn') {
-                startScanning(node, noble);
-            } else {
-                if (node.scanning) {
-                    stopScan(node,noble, true);
-                }
-            }
-        });
+        startScanning(node);
 
         this.on("close", function() {
             // Called when the node is shutdown - eg on redeploy.
             // Allows ports to be closed, connections dropped etc.
             // eg: this.client.disconnect();
-            stopScan(node,noble, false);
+            stopScan(node);
             // remove listeners since they get added again on deploy
-            noble.removeAllListeners();
+            this.scanner.removeAllListeners();
         });
 
     }
