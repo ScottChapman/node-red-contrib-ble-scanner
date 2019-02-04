@@ -46,7 +46,7 @@ function stopScan(node) {
     node.log("Inside stopScan")
     if (node.scanning) {
         // stop the scan
-        noble.scanOff()
+        node.scanner.scanOff()
         node.log('BLE scanning stopped.');
         node.status({fill:"red",shape:"ring",text:"stopped"});
         node.scanning = false;
