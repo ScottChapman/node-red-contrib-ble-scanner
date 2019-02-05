@@ -1,5 +1,5 @@
 {
-  "name": "node-red-contrib-smartthings-BLE-presence",
+  "name": "node-red-contrib-smartthings-ble-presence",
   "version": "0.1.0",
   "description": "Node-RED nodes for managing SmartThings presence with BLE devices",
   "dependencies": {
