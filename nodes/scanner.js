@@ -140,12 +140,20 @@ module.exports = function(RED) {
             if (node.map && node.map.hasOwnProperty(device.uuid)) {
                 node.log("Found device I was looking for...")
                 // Generate output event
-                device.host = node.machineId;
-                device.timestamp = new Date().getTime();
-                node.client.publish('/presence-scanner/devices',JSON.stringify(device), {qos: 1, retain: false})
-                node.send({
-                    payload: device
-                });
+                device.STDeviceName = node.map[device.uuid]
+                var obj = {
+                    host: node.machineId,
+                    timestamp: new Date().getTime(),
+                    payload: {
+                        bluetooth: device,
+                        smartthing: {
+                            name: node.map[device.uuid]
+                        }
+                    }
+
+                }
+                node.client.publish('/presence-scanner/devices',JSON.stringify(obj), {qos: 1, retain: false})
+                node.send(obj);
             }
         });
 

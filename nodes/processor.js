@@ -68,8 +68,8 @@ function missingHost(node,host) {
 }
 
 function present(node,device) {
-    node.log(device.STDeviceName + " present!")
-    var topic = `/smartthings/${device.STDeviceName}/presence`
+    node.log(device.name + " present!")
+    var topic = `/smartthings/${device.name}/presence`
     node.brokerConn.publish(JSON.stringify({
         topic: topic,
         payload: 'present',
@@ -79,8 +79,8 @@ function present(node,device) {
 }
 
 function notPresent(node,device) {
-    node.log($device.STDeviceName + " NOT present!")
-    var topic = `/smartthings/${device.STDeviceName}/presence`
+    node.log($device.name + " NOT present!")
+    var topic = `/smartthings/${device.name}/presence`
     node.brokerConn.publish(JSON.stringify({
         topic: topic,
         payload: 'not present',
@@ -96,10 +96,10 @@ function deviceListener(node) {
     node.brokerConn.subscribe(topic, 0, (topic,payload,packet) => {
         payload = JSON.parse(payload.toString());
         node.log("Got device")
-        if (!deviceCache.get(payload.STDeviceName)) {
-            present(node,payload);
+        if (!deviceCache.get(payload.payload.smartthing.name)) {
+            present(node,payload.payload.smartthing);
         }
-        deviceCache.set(payload.STDeviceName, payload);
+        deviceCache.set(payload.payload.smartthing.name, payload);
         node.log(JSON.stringify(payload))
     },id)
     node.on('close', done => {
