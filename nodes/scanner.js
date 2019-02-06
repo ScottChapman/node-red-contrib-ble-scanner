@@ -75,12 +75,7 @@ function getConfig(node) {
     var interval;
     node.client.on('connect', function () {
         node.log("connected")
-        node.client.subscribe('/presence-scanner/config', (err) => {
-            if (err)
-                node.error(err);
-            else
-                node.status({fill: 'green', shape: 'dot', text: 'Scanning'});
-        });
+        node.client.subscribe('/presence-scanner/config');
     })
 
     node.client.on('message', (topic,message) => {
