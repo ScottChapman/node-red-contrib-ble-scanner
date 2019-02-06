@@ -165,7 +165,7 @@ module.exports = function(RED) {
             stopScan(node);
             node.client.end();
             // remove listeners since they get added again on deploy
-            this.scanner.removeAllListeners();
+            node.scanner.removeAllListeners();
         });
 
     }

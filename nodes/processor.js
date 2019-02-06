@@ -69,7 +69,9 @@ function listen(node) {
         '/presence-scanner/heartbeat',
         '/presence-scanner/devices',
         '/presence-scanner/state'
-    ])
+    ],(err,granted) => {
+        node.status({fill: 'green', shape: 'dot', text: 'Listening...'});
+    })
     node.client.on("message", (topic,message) => {
         message = JSON.parse(message);
         switch (topic) {
@@ -111,6 +113,7 @@ module.exports = function (RED) {
         this.broker = config.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
         var node = this;
+        node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
         if (node.brokerConn) {
             var options = Object.assign({},this.brokerConn.options)
             options.clientId = 'STPresenceProcessor_' + (1+Math.random()*4294967295).toString(16);
@@ -121,7 +124,8 @@ module.exports = function (RED) {
             },1*60*1000)
             node.on("close", () => {
                 saveState(node);
-                node.client.exit();
+                node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
+                node.client.end();
             })
         } else {
             node.error(RED._('mqtt.errors.missing-config'));
