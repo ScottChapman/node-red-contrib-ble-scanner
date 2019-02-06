@@ -136,8 +136,9 @@ module.exports = function(RED) {
         getConfig(node);
 
         this.scanner.on('device', function(device) {
-            node.log("Found name: " + device.name)
-            if (node.map && node.map.hasOwnProperty(device.id)) {
+            node.log("Found device: " + JSON.stringify(device))
+            if (node.map && node.map.hasOwnProperty(device.uuid)) {
+                node.log("Found device I was looking for...")
                 // Generate output event
                 node.client.publish('/presence-scanner/devices',JSON.stringify(device), {qos: 1, retain: false})
                 node.send(msg);
