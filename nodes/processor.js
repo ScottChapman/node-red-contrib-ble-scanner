@@ -115,7 +115,7 @@ module.exports = function (RED) {
             var options = Object.assign({},this.brokerConn.options)
             options.clientId = 'STPresenceProcessor_' + (1+Math.random()*4294967295).toString(16);
             this.client  = mqtt.connect(this.brokerConn.brokerurl, options);
-            listen(this.client)
+            listen(this)
             setInterval(() => {
                 saveState(node)
             },1*60*1000)
