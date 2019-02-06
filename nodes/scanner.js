@@ -131,7 +131,7 @@ module.exports = function(RED) {
         options.clientId = 'STPresenceScan_' + (1+Math.random()*4294967295).toString(16);
         this.client  = mqtt.connect(this.brokerConn.brokerurl, options);
         this.log("Setting up scanner node")
-        node.scanner = new bluetoothctl();
+        node.scanner = new bluetooth();
 
         // get config
         getConfig(node);
