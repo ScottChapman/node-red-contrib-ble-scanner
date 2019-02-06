@@ -35,9 +35,7 @@ function saveState(node) {
         state.hosts[host] = hostCache.get(host);
     }
     node.log("Persisting State: " + JSON.stringify(state))
-    node.brokerConn.publish({
-        topic: '/st-presence/state',
-        payload: JSON.stringify(state),
+    node.brokerConn.publish('/st-presence/state', JSON.stringify(state), {
         qos:2,
         retain: true
     })
@@ -70,9 +68,7 @@ function missingHost(node,host) {
 function present(node,device) {
     node.log(device.name + " present!")
     var topic = `/smartthings/${device.name}/presence`
-    node.brokerConn.publish(JSON.stringify({
-        topic: topic,
-        payload: 'present',
+    node.brokerConn.publish(topic,'present',{
         qos:1,
         retain: false
     }))
@@ -81,9 +77,7 @@ function present(node,device) {
 function notPresent(node,device) {
     node.log($device.name + " NOT present!")
     var topic = `/smartthings/${device.name}/presence`
-    node.brokerConn.publish(JSON.stringify({
-        topic: topic,
-        payload: 'not present',
+    node.brokerConn.publish(topic,'not present',{
         qos:1,
         retain: false
     }))
