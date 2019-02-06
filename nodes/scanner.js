@@ -31,8 +31,7 @@ const stopDelay = 15;
 
 // Take care of starting the scan and sending the status message
 function startScan(node) {
-    if (!node.scanner) 
-        node.scanner = new bluetooth();
+    node.bluetoothctl.spawn();
     node.log("Inside startScan")
     if (!node.scanning) {
         // start the scan
@@ -45,8 +44,7 @@ function startScan(node) {
 
 // Take care of stopping the scan and sending the status message
 function stopScan(node) {
-    if (node.scanner) 
-        node.scanner.kill();
+    node.scanner.kill();
     node.log("Inside stopScan")
     if (node.scanning) {
         // stop the scan
@@ -133,6 +131,7 @@ module.exports = function(RED) {
         options.clientId = 'STPresenceScan_' + (1+Math.random()*4294967295).toString(16);
         this.client  = mqtt.connect(this.brokerConn.brokerurl, options);
         this.log("Setting up scanner node")
+        node.scanner = new bluetoothctl();
 
         // get config
         getConfig(node);
