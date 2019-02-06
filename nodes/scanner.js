@@ -44,11 +44,10 @@ function startScan(node) {
 
 // Take care of stopping the scan and sending the status message
 function stopScan(node) {
-    node.scanner.kill();
     node.log("Inside stopScan")
     if (node.scanning) {
         // stop the scan
-        node.scanner.scanOff()
+        node.scanner.exit();
         node.log('BLE scanning stopped.');
         node.status({fill:"red",shape:"ring",text:"stopped"});
         node.scanning = false;
