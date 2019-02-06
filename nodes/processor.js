@@ -75,7 +75,7 @@ function present(node,device) {
         payload: 'present',
         qos:1,
         retain: false
-    })
+    }))
 }
 
 function notPresent(node,device) {
@@ -86,7 +86,7 @@ function notPresent(node,device) {
         payload: 'not present',
         qos:1,
         retain: false
-    })
+    }))
 }
 
 function deviceListener(node) {
