@@ -31,6 +31,8 @@ const stopDelay = 15;
 
 // Take care of starting the scan and sending the status message
 function startScan(node) {
+    if (!node.scanner) 
+        node.scanner = new bluetooth();
     node.log("Inside startScan")
     if (!node.scanning) {
         // start the scan
@@ -43,6 +45,8 @@ function startScan(node) {
 
 // Take care of stopping the scan and sending the status message
 function stopScan(node) {
+    if (node.scanner) 
+        node.scanner.kill();
     node.log("Inside stopScan")
     if (node.scanning) {
         // stop the scan
@@ -117,7 +121,6 @@ module.exports = function(RED) {
     function STPresenceScan(config) {
         // Create a RED node
         RED.nodes.createNode(this,config);
-        this.scanner = new bluetooth();
 
         // var node = this;
         var node = this;
