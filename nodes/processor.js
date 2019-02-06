@@ -75,27 +75,27 @@ function listen(node) {
         switch (topic) {
             case '/presence-scanner/heartbeat':
                 node.log("Got heartbeat");
-                node.log(JSON.stringify(payload))
-                hostCache.set(payload.host,payload);
+                node.log(JSON.stringify(message))
+                hostCache.set(message.host,message);
                 break;
             case '/presence-scanner/devices':
                 node.log("Got device")
-                node.log(JSON.stringify(payload))
-                if (!deviceCache.get(payload.payload.smartthing.name)) {
-                    present(node,payload.payload.smartthing);
+                node.log(JSON.stringify(message))
+                if (!deviceCache.get(message.payload.smartthing.name)) {
+                    present(node,message.payload.smartthing);
                 }
-                deviceCache.set(payload.payload.smartthing.name, payload);
+                deviceCache.set(message.payload.smartthing.name, message);
                 break;
             case '/presence-scanner/state':
                 node.log("Restoring state")
-                node.log(JSON.stringify(payload))
-                for (var host of _.keys(payload.hosts)) {
+                node.log(JSON.stringify(message))
+                for (var host of _.keys(message.hosts)) {
                     node.log("Restoring state of host: " + host)
-                    hostCache.set(host,payload.hosts[host])
+                    hostCache.set(message.hosts[host],host)
                 }
-                for (var device of _.keys(payload.devices)) {
+                for (var device of _.keys(message.devices)) {
                     node.log("Restoring state of device: " + device)
-                    deviceCache.set(device,payload.devices[device])
+                    deviceCache.set(message.devices[device],device)
                 }
                 node.client.unsubscribe('/presence-scanner/state');
                 break;
