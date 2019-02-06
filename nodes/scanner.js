@@ -26,8 +26,8 @@ var bluetooth = require('../lib/bluetoothctl.js');
 var os = require('os');
 const setTimeoutPromise = util.promisify(setTimeout);
 const setImmediatePromise = util.promisify(setImmediate);
-const startDelay = 60;
-const stopDelay = 55;
+const startDelay = 20;
+const stopDelay = 15;
 
 // Take care of starting the scan and sending the status message
 function startScan(node) {
