@@ -69,7 +69,7 @@ function missingHost(node,host) {
 
 function present(node,device) {
     node.log(device.STDeviceName + " present!")
-    var topic = `/SmartThings/presence/${device.STDeviceName}/presence`
+    var topic = `/smartthings/${device.STDeviceName}/presence`
     node.brokerConn.publish({
         topic: topic,
         payload: 'present',
@@ -80,10 +80,10 @@ function present(node,device) {
 
 function notPresent(node,device) {
     node.log($device.STDeviceName + " NOT present!")
-    var topic = `/SmartThings/presence/${device.STDeviceName}/presence`
+    var topic = `/smartthings/${device.STDeviceName}/presence`
     node.brokerConn.publish({
         topic: topic,
-        payload: 'not_present',
+        payload: 'not present',
         qos:1,
         retain: false
     })
