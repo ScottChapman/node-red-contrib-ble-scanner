@@ -140,7 +140,6 @@ module.exports = function(RED) {
             if (node.map && node.map.hasOwnProperty(device.uuid)) {
                 node.log("Found device I was looking for...")
                 // Generate output event
-                device.STDeviceName = node.map[device.uuid]
                 var obj = {
                     host: node.machineId,
                     timestamp: new Date().getTime(),
