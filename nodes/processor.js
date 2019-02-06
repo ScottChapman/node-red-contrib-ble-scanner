@@ -71,7 +71,7 @@ function present(node,device) {
     node.brokerConn.publish(topic,'present',{
         qos:1,
         retain: false
-    }))
+    })
 }
 
 function notPresent(node,device) {
@@ -80,7 +80,7 @@ function notPresent(node,device) {
     node.brokerConn.publish(topic,'not present',{
         qos:1,
         retain: false
-    }))
+    })
 }
 
 function deviceListener(node) {
