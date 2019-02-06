@@ -119,13 +119,15 @@ module.exports = function (RED) {
             options.clientId = 'STPresenceProcessor_' + (1+Math.random()*4294967295).toString(16);
             this.client  = mqtt.connect(this.brokerConn.brokerurl, options);
             listen(this)
-            setInterval(() => {
+            node.interval = setInterval(() => {
                 saveState(node)
             },1*60*1000)
             node.on("close", () => {
                 saveState(node);
                 node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
                 node.client.end();
+                if (node.interval)
+                    clearInterval(node.interval)
             })
         } else {
             node.error(RED._('mqtt.errors.missing-config'));

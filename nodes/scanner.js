@@ -34,7 +34,7 @@ function startScan(node) {
         // start the scan
         node.log("Scanning for BLEs started.");
         node.scanner.scanOn()
-        node.status({fill:"green",shape:"dot",text:"started"});
+        node.status({fill:"green",shape:"dot",text:"Scanning..."});
         node.scanning = true;
     }
 }
