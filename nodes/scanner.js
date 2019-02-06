@@ -140,8 +140,12 @@ module.exports = function(RED) {
             if (node.map && node.map.hasOwnProperty(device.uuid)) {
                 node.log("Found device I was looking for...")
                 // Generate output event
+                device.host = this.machineId;
+                device.timestamp = new Date().getTime();
                 node.client.publish('/presence-scanner/devices',JSON.stringify(device), {qos: 1, retain: false})
-                node.send(msg);
+                node.send({
+                    payload: device
+                });
             }
         });
 
