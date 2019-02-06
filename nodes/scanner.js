@@ -20,12 +20,9 @@
  * @author <a href="mailto:carlos.pedrinaci@open.ac.uk">Carlos Pedrinaci</a> (KMi - The Open University)
  * based on the initial node by Charalampos Doukas http://blog.buildinginternetofthings.com/2013/10/12/using-node-red-to-scan-for-ble-devices/
  */
-const util = require('util');
 const mqtt = require('mqtt')
 var bluetooth = require('../lib/bluetoothctl.js');
 var os = require('os');
-const setTimeoutPromise = util.promisify(setTimeout);
-const setImmediatePromise = util.promisify(setImmediate);
 const startDelay = 20;
 const stopDelay = 15;
 
@@ -57,7 +54,7 @@ function stopScan(node) {
 function startScanning(node) {
     node.log("StartScanning")
     scanIteration(node)
-    interval = setInterval(() => {
+    node.interval = setInterval(() => {
         // send heartbeat
         node.client.publish('/presence-scanner/heartbeat', JSON.stringify({
             host: node.machineId,
@@ -67,12 +64,12 @@ function startScanning(node) {
             node.log("interval")
             scanIteration(node);
         }
+        delete node.interval;
     },startDelay * 1000)
 }
 
 function getConfig(node) {
     node.log("Get Config")
-    var interval;
     node.client.on('connect', function () {
         node.log("connected")
         node.client.subscribe('/presence-scanner/config');
@@ -86,8 +83,10 @@ function getConfig(node) {
 
     node.client.on('close', function () {
         node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-        if (interval)
-            clearInterval(interval);
+        if (node.interval)
+            clearInterval(node.interval);
+        if (node.timeout)
+            clearTimeout(node.timeout)
         node.log("Disconnected")
     })
 }
@@ -97,17 +96,17 @@ function scanIteration(node) {
     return new Promise((resolve,reject) => {
         node.log("Scan iteration start")
         startScan(node);
-        setTimeoutPromise(stopDelay*1000).then(() => {
+        node.timeout = setTimeout(() => {
             node.log("Scan iteration stop")
             stopScan(node)
-        })
-
+            delete node.timeout;
+            resolve();
+        },stopDelay*1000)
     })
 }
 
 module.exports = function(RED) {
     "use strict";
-
     
     // The main node definition - most things happen in here
     function STPresenceScan(config) {
