@@ -70,7 +70,7 @@ function missingHost(node,host) {
 function present(node,device) {
     node.log(device.STDeviceName + " present!")
     var topic = `/smartthings/${device.STDeviceName}/presence`
-    node.brokerConn.publish({
+    node.brokerConn.publish(JSON.stringify({
         topic: topic,
         payload: 'present',
         qos:1,
@@ -81,7 +81,7 @@ function present(node,device) {
 function notPresent(node,device) {
     node.log($device.STDeviceName + " NOT present!")
     var topic = `/smartthings/${device.STDeviceName}/presence`
-    node.brokerConn.publish({
+    node.brokerConn.publish(JSON.stringify({
         topic: topic,
         payload: 'not present',
         qos:1,
@@ -113,7 +113,7 @@ function heartbeatListener(node) {
     var id = 2;
     node.brokerConn.subscribe(topic, 0, (topic,payload,packet) => {
         payload = JSON.parse(payload.toString());
-        node.log("Got heartbeat")
+        node.log("Got heartbeat from " + payload.host + " at " + new Date(payload.timestamp))
         hostCache.set(payload.host,payload);
         node.log(JSON.stringify(payload))
     },id)
