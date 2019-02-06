@@ -31,7 +31,7 @@ const stopDelay = 15;
 
 // Take care of starting the scan and sending the status message
 function startScan(node) {
-    node.bluetoothctl.spawn();
+    node.scanner.spawn();
     node.log("Inside startScan")
     if (!node.scanning) {
         // start the scan
