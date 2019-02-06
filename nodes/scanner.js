@@ -163,6 +163,7 @@ module.exports = function(RED) {
             // Allows ports to be closed, connections dropped etc.
             // eg: this.client.disconnect();
             stopScan(node);
+            node.client.end();
             // remove listeners since they get added again on deploy
             this.scanner.removeAllListeners();
         });

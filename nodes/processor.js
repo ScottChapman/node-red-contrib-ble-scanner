@@ -17,6 +17,7 @@
 const validator = require('validator')
 const _ = require('lodash')
 const NodeCache = require( "node-cache" );
+const mqtt = require('mqtt')
 const deviceCache = new NodeCache( { stdTTL: 5*60, checkperiod: 60 } );
 const hostCache = new NodeCache( { stdTTL: 5*60, checkperiod: 60 } );
 
@@ -35,29 +36,9 @@ function saveState(node) {
         state.hosts[host] = hostCache.get(host);
     }
     node.log("Persisting State: " + JSON.stringify(state))
-    node.brokerConn.publish('/st-presence/state', JSON.stringify(state), {
+    node.client.publish('/st-presence/state', JSON.stringify(state), {
         qos:2,
         retain: true
-    })
-}
-
-function listen(node) {
-    node.brokerConn.register(node)
-    node.on('close', function () {
-        // node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-        node.log("Disconnected")
-        node.brokerConn.unsubscribe(node);
-    })
-    if (node.brokerConn.connected) {
-        // node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
-    }
-    deviceListener(node);
-    heartbeatListener(node);
-    deviceCache.on("expired", (key,value) => {
-        notPresent(node,value);
-    })
-    hostCache.on("expired", (key,value) => {
-        missingHost(node,value);
     })
 }
 
@@ -68,7 +49,7 @@ function missingHost(node,host) {
 function present(node,device) {
     node.log(device.name + " present!")
     var topic = `/smartthings/${device.name}/presence`
-    node.brokerConn.publish(topic,'present',{
+    node.client.publish(topic,'present',{
         qos:1,
         retain: false
     })
@@ -77,42 +58,48 @@ function present(node,device) {
 function notPresent(node,device) {
     node.log($device.name + " NOT present!")
     var topic = `/smartthings/${device.name}/presence`
-    node.brokerConn.publish(topic,'not present',{
+    node.client.publish(topic,'not present',{
         qos:1,
         retain: false
     })
 }
 
-function deviceListener(node) {
-    var topic = '/presence-scanner/devices'
-    var id = 1;
-    node.log("subscribing to " + topic);
-    node.brokerConn.subscribe(topic, 0, (topic,payload,packet) => {
-        payload = JSON.parse(payload.toString());
-        node.log("Got device")
-        if (!deviceCache.get(payload.payload.smartthing.name)) {
-            present(node,payload.payload.smartthing);
+function listen(node) {
+    node.client.subscribe([
+        '/presence-scanner/heartbeat',
+        '/presence-scanner/devices',
+        '/presence-scanner/state'
+    ])
+    node.client.on("message", (topic,message) => {
+        message = JSON.parse(message);
+        switch (topic) {
+            case '/presence-scanner/heartbeat':
+                node.log("Got heartbeat");
+                node.log(JSON.stringify(payload))
+                hostCache.set(payload.host,payload);
+                break;
+            case '/presence-scanner/devices':
+                node.log("Got device")
+                node.log(JSON.stringify(payload))
+                if (!deviceCache.get(payload.payload.smartthing.name)) {
+                    present(node,payload.payload.smartthing);
+                }
+                deviceCache.set(payload.payload.smartthing.name, payload);
+                break;
+            case '/presence-scanner/state':
+                node.log("Restoring state")
+                node.log(JSON.stringify(payload))
+                for (var host of _.keys(payload.hosts)) {
+                    node.log("Restoring state of host: " + host)
+                    hostCache.set(host,payload.hosts[host])
+                }
+                for (var device of _.keys(payload.devices)) {
+                    node.log("Restoring state of device: " + device)
+                    deviceCache.set(device,payload.devices[device])
+                }
+                node.client.unsubscribe('/presence-scanner/state');
+                break;
         }
-        deviceCache.set(payload.payload.smartthing.name, payload);
-        node.log(JSON.stringify(payload))
-    },id)
-    node.on('close', done => {
-        node.brokerConn.unsubscribe(topic,id);
-    })
-}
-
-function heartbeatListener(node) {
-    var topic = '/presence-scanner/heartbeat'
-    node.log("subscribing to " + topic);
-    var id = 2;
-    node.brokerConn.subscribe(topic, 0, (topic,payload,packet) => {
-        payload = JSON.parse(payload.toString());
-        node.log("Got heartbeat from " + payload.host + " at " + new Date(payload.timestamp))
-        hostCache.set(payload.host,payload);
-        node.log(JSON.stringify(payload))
-    },id)
-    node.on('close', done => {
-        node.brokerConn.unsubscribe(topic,id);
     })
 }
 
@@ -125,26 +112,16 @@ module.exports = function (RED) {
         this.brokerConn = RED.nodes.getNode(this.broker);
         var node = this;
         if (node.brokerConn) {
-            listen(this)
-            var id = 3;
-            node.brokerConn.subscribe('/st-presence/state',2, (topic,payload,packet) => {
-                node.log("Restoring state")
-                var state = JSON.parse(payload.toString());
-                for (var host of _.keys(state.hosts)) {
-                    node.log("Restoring state of host: " + host)
-                    hostCache.set(host,state.hosts[host])
-                }
-                for (var device of _.keys(state.devices)) {
-                    node.log("Restoring state of device: " + device)
-                    deviceCache.set(device,state.devices[device])
-                }
-                node.brokerConn.unsubscribe('/st-presence/state',id);
-            },id)
+            var options = Object.assign({},this.brokerConn.options)
+            options.clientId = 'STPresenceProcessor_' + (1+Math.random()*4294967295).toString(16);
+            this.client  = mqtt.connect(this.brokerConn.brokerurl, options);
+            listen(this.client)
             setInterval(() => {
                 saveState(node)
             },1*60*1000)
             node.on("close", () => {
                 saveState(node);
+                node.client.exit();
             })
         } else {
             node.error(RED._('mqtt.errors.missing-config'));
