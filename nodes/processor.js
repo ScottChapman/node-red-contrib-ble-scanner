@@ -125,7 +125,6 @@ module.exports = function (RED) {
             node.on("close", () => {
                 saveState(node);
                 node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-                node.client.end();
                 if (node.interval)
                     clearInterval(node.interval)
             })
