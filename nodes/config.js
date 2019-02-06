@@ -25,7 +25,7 @@ function publish(node, payload) {
     client.on('connect', function () {
         node.log("connected")
         node.status({fill: 'green', shape: 'dot', text: 'node-red:common.status.connected'});
-        client.publish('/presence-scanner/config', fixMap(payload), { qos: 1, retain: true }, (err) => {
+        client.publish('/presence-scanner/config', payload, { qos: 1, retain: true }, (err) => {
             node.log("SENT")
             client.end();
         })
@@ -34,17 +34,6 @@ function publish(node, payload) {
         node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
         node.log("Disconnected")
     })
-}
-
-function fixMap(map) {
-    if (typeof map === "string")
-        map = JSON.parse(map)
-    var result = {};
-    for (var id of _.keys(map)) {
-        var newID = id.toLowerCase().replace(/:/g,"");
-        result[newID] = map[id];
-    }
-    return JSON.stringify(result);
 }
 
 module.exports = function (RED) {
