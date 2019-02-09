@@ -1,0 +1,9 @@
+{
+    "broker": {
+        "brokerUrl": "http://localhost:1883",
+        "options": {}
+    },
+    "map": {
+        "mac_address": "smartthings_device_name"
+    }
+}

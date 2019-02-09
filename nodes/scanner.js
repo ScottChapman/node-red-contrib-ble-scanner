@@ -20,90 +20,8 @@
  * @author <a href="mailto:carlos.pedrinaci@open.ac.uk">Carlos Pedrinaci</a> (KMi - The Open University)
  * based on the initial node by Charalampos Doukas http://blog.buildinginternetofthings.com/2013/10/12/using-node-red-to-scan-for-ble-devices/
  */
-const mqtt = require('mqtt')
-var bluetooth = require('../lib/bluetoothctl.js');
-var os = require('os');
-const startDelay = 20;
-const stopDelay = 15;
 
-// Take care of starting the scan and sending the status message
-function startScan(node) {
-    node.scanner.spawn();
-    node.log("Inside startScan")
-    if (!node.scanning) {
-        // start the scan
-        node.log("Scanning for BLEs started.");
-        node.scanner.scanOn()
-        node.status({fill:"green",shape:"dot",text:"Scanning..."});
-        node.scanning = true;
-    }
-}
-
-// Take care of stopping the scan and sending the status message
-function stopScan(node) {
-    node.log("Inside stopScan")
-    if (node.scanning) {
-        // stop the scan
-        node.scanner.exit();
-        node.log('BLE scanning stopped.');
-        node.status({fill:"red",shape:"ring",text:"stopped"});
-        node.scanning = false;
-    }
-}
-
-function startScanning(node) {
-    node.log("StartScanning")
-    scanIteration(node)
-    node.interval = setInterval(() => {
-        // send heartbeat
-        node.client.publish('/presence-scanner/heartbeat', JSON.stringify({
-            host: node.machineId,
-            timestamp: new Date().getTime() 
-        }),{qos: 1, retain: false})
-        if (node.map) {
-            node.log("interval")
-            scanIteration(node);
-        }
-        delete node.interval;
-    },startDelay * 1000)
-}
-
-function getConfig(node) {
-    node.log("Get Config")
-    node.client.on('connect', function () {
-        node.log("connected")
-        node.client.subscribe('/presence-scanner/config');
-    })
-
-    node.client.on('message', (topic,message) => {
-        node.log("Updated config")
-        node.map = JSON.parse(message);
-        console.dir(node.map)
-    });
-
-    node.client.on('close', function () {
-        node.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-        if (node.interval)
-            clearInterval(node.interval);
-        if (node.timeout)
-            clearTimeout(node.timeout)
-        node.log("Disconnected")
-    })
-}
-
-function scanIteration(node) {
-    node.log("ScanIteration")
-    return new Promise((resolve,reject) => {
-        node.log("Scan iteration start")
-        startScan(node);
-        node.timeout = setTimeout(() => {
-            node.log("Scan iteration stop")
-            stopScan(node)
-            delete node.timeout;
-            resolve();
-        },stopDelay*1000)
-    })
-}
+var scanner = require('./lib/scanner.js')
 
 module.exports = function(RED) {
     "use strict";
@@ -116,50 +34,21 @@ module.exports = function(RED) {
         // var node = this;
         var node = this;
         this.broker = config.broker;
-        this.brokerConn = RED.nodes.getNode(this.broker);
-        this.machineId = os.hostname();
-        this.scanning = false;
+        this.scanner = new scanner(RED.nodes.getNode(this.broker));
         this.status({fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected'});
-        var options = Object.assign({},this.brokerConn.options)
-        options.clientId = 'STPresenceScan_' + (1+Math.random()*4294967295).toString(16);
-        this.client  = mqtt.connect(this.brokerConn.brokerurl, options);
         this.log("Setting up scanner node")
-        node.scanner = new bluetooth();
-
-        // get config
-        getConfig(node);
 
         this.scanner.on('device', function(device) {
-            node.log("Found device: " + JSON.stringify(device))
-            if (node.map && node.map.hasOwnProperty(device.uuid)) {
-                node.log("Found device I was looking for...")
-                // Generate output event
-                var obj = {
-                    host: node.machineId,
-                    timestamp: new Date().getTime(),
-                    payload: {
-                        bluetooth: device,
-                        smartthing: {
-                            name: node.map[device.uuid]
-                        }
-                    }
-
-                }
-                node.client.publish('/presence-scanner/devices',JSON.stringify(obj), {qos: 1, retain: false})
-                node.send(obj);
-            }
+            node.send(obj);
         });
 
-        startScanning(node);
+        this.scanner.on('scanning',() => {
+            this.status({fill: 'green', shape: 'dot', text: 'Scanning...'});
+        })
 
-        this.on("close", function() {
-            // Called when the node is shutdown - eg on redeploy.
-            // Allows ports to be closed, connections dropped etc.
-            // eg: this.client.disconnect();
-            stopScan(node);
-            // remove listeners since they get added again on deploy
-            node.scanner.removeAllListeners();
-        });
+        this.scanner.on('stopped',() => {
+            this.status({fill: 'red', shape: 'ring', text: 'Stopped'});
+        })
 
     }
     
@@ -168,38 +57,3 @@ module.exports = function(RED) {
     RED.nodes.registerType("st-presence-scanner",STPresenceScan);
 
 }
-
-/*
-
-var config = {
-    duplicates: false
-}
-
-var mock = {
-    on: function (name, func) {
-        console.log("on: " + name)
-    },
-    nodes: {
-        registerType: function (name, func) {
-            console.log("Registered: " + name)
-            func(config);
-        },
-        createNode: function(obj,n) {
-            console.log("createNode")
-        }
-    },
-    send: function(msg) {
-        console.log("send: " + msg)
-    },
-    status: function(obj) {
-        console.log("status: " + JSON.stringify(obj))
-    },
-    log: function(msg) {
-        console.log("log: " + msg)
-    }
-}
-
-
-
-module.exports(mock)
-*/
