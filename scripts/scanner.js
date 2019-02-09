@@ -14,3 +14,5 @@ scanner.on('scanning',() => {
 scanner.on('stopped',() => {
     console.log("stopped...")
 })
+
+scanner.startScanning();
