@@ -1,4 +1,4 @@
-var Scanner = require(__dirname + '/lib/scanner.js')
+var Scanner = require(__dirname + '/../lib/scanner.js')
 var config = require('config')
 
 scanner = new Scanner(config.get("broker"),config.get("map"))
