@@ -12,7 +12,3 @@ configure.on('published',() => {
     console.log("published")
     configure.end();
 })
-
-configure.on('done',() => {
-    console.log("Done")
-})
