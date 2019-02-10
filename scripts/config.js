@@ -3,7 +3,7 @@ var config = require('config')
 
 configure = new Configure(config.get("broker"))
 
-configure.on('connect', () => {
+configure.on('connected', () => {
     console.log("connected")
     configure.publish(config.get("map"))
 });
@@ -13,6 +13,6 @@ configure.on('published',() => {
     configure.end();
 })
 
-configure.on('close',() => {
+configure.on('done',() => {
     console.log("Done")
 })
