@@ -22,19 +22,19 @@ proc.on("not_present", (device) => {
 })
 
 proc.on("device", (device) => {
-    console.log("Device found")
-    console.dir(device)
+    // console.log("Device found")
+    // console.dir(device)
 })
 
 proc.on("heartbeat",(host) => {
-    console.log("heartbeat found")
-    console.dir(host)
+    // console.log("heartbeat found")
+    // console.dir(host)
 })
 
 proc.on("state_saved",() => {
-    console.log("State Saved")
+    // console.log("State Saved")
 })
 
 proc.on("state_restored",() => {
-    console.log("State Restored")
+    // console.log("State Restored")
 })
