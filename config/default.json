@@ -1,0 +1,17 @@
+{
+    "syslog": {
+        "host": "storage.local",
+        "levels": {
+            "bluetooth": "info",
+            "BTLE-Scan": "info",
+            "default": "info"
+        }
+    },
+    "broker": {
+        "brokerUrl": "http://presence-pi:1883",
+        "options": {}
+    },
+    "map": {
+        "mac_address": "smartthings_device_name"
+    }
+}
